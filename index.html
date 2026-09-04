@@ -91,34 +91,10 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = "https://gmail-task-proxy.sorinfamilyemail.workers.dev/";
-
-const DEFAULT_DATA = {
-  today: [
-    { id:'t1', time:'3:30 PM', tag:'School', title:'Pickup & Carpool: Rosie & Maisie', detail:'Remember Maisie needs her soccer bag packed for practice directly after.', high:false, done:false },
-    { id:'t2', time:'5:30 PM', tag:'Action', title:'Confirm Saturday playdate with Sarah', detail:'Sarah sent email regarding logistics for 10 AM Saturday.', high:true, done:false },
-    { id:'t3', time:'6:45 PM', tag:'Dinner', title:'Dinner: Pan-Seared Chicken & Rice', detail:'Thaw chicken cutlets before 4:00 PM.', high:false, done:false }
-  ],
-  kids: [
-    { id:'k1', time:'Due Friday', tag:'Rosie', title:'Return signed field trip permission slip', detail:'Print form from school portal email and place in Rosie backpack.', high:true, done:false },
-    { id:'k2', time:'Next Mon', tag:'Maisie', title:'Order spring soccer uniform (Size YM)', detail:'Registration link was sent by league coordinator.', high:false, done:false }
-  ],
-  meals: [
-    { id:'m1', time:'Tonight', tag:'Plan', title:'Pan-Seared Chicken Cutlets & Rice', detail:'Pantry check: Jasmine rice, garlic, olive oil, lemon.', high:false, done:false },
-    { id:'m2', time:'Tomorrow', tag:'Plan', title:'Homemade Cast-Iron Skillet Pizza', detail:'Pick up whole milk mozzarella and fresh basil from grocery.', high:false, done:false },
-    { id:'m3', time:'Weekend', tag:'Prep', title:'Sunday Slow Cooker Chili', detail:'Ground turkey, black beans, diced tomatoes.', high:false, done:false }
-  ],
-  house: [
-    { id:'h1', time:'This Week', tag:'Maintenance', title:'Order 20x25x1 HVAC filters', detail:'Swap second-floor air return filter before pollen season.', high:false, done:false },
-    { id:'h2', time:'Weekend', tag:'Yard', title:'Check yard planter & Serviceberry tree', detail:'Inspect soil moisture and trim early spring deadwood.', high:false, done:false }
-  ],
-  inbox: [
-    { id:'i1', time:'Auto-Parsed', tag:'From Alana', title:'Dentist confirmation for both kids', detail:'Extracted from forward: "Appointments booked for next Thursday at 2 PM."', high:false, done:false }
-  ]
-};
+const PROXY_URL = "https://gmail-task-proxy.sorinfamilyemail.workers.dev/";
 
 let activeTab = 'today';
-let tasks = JSON.parse(localStorage.getItem('home_ops_tasks') || 'null') || DEFAULT_DATA;
+let tasks = { today: [], kids: [], meals: [], house: [], inbox: [] };
 let collapsed = {};
 
 const TAB_CONFIG = [
@@ -128,6 +104,15 @@ const TAB_CONFIG = [
   { id: 'house', label: 'House & Projects', title: "Home Operations" },
   { id: 'inbox', label: 'Assistant Inbox', title: "Extracted From Emails" },
 ];
+
+function groupTasksByCategories(flatTasks) {
+  const grouped = { today: [], kids: [], meals: [], house: [], inbox: [] };
+  flatTasks.forEach(t => {
+    const cat = t.category && grouped[t.category] ? t.category : 'inbox';
+    grouped[cat].push(t);
+  });
+  return grouped;
+}
 
 function renderTabs() {
   const container = document.getElementById('tabs');
@@ -194,51 +179,64 @@ function render() {
   });
 
   content.querySelectorAll('.done-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener('click', async (e) => {
       e.stopPropagation();
       const id = btn.dataset.id;
+      
+      let targetTask = null;
       for (let cat in tasks) {
-        const task = tasks[cat].find(t => t.id === id);
-        if (task) {
-          task.done = true;
+        targetTask = tasks[cat].find(t => t.id === id);
+        if (targetTask) {
+          targetTask.done = true;
           break;
         }
       }
-      localStorage.setItem('home_ops_tasks', JSON.stringify(tasks));
       render();
+
+      try {
+        await fetch(PROXY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'updateDone', id: id, done: true })
+        });
+      } catch(err) {
+        console.error("Failed to sync completion status to server", err);
+      }
     });
   });
 }
 
-document.getElementById('syncBtn').addEventListener('click', async () => {
+async function performSync() {
   const btn = document.getElementById('syncBtn');
   btn.classList.add('loading');
   
-  if (APPS_SCRIPT_URL) {
-    try {
-      const res = await fetch(APPS_SCRIPT_URL);
-      const remoteData = await res.json();
-      if (remoteData && remoteData.newTasks && remoteData.newTasks.length > 0) {
-        remoteData.newTasks.forEach(task => {
-          const category = task.category || 'inbox';
-          if (!tasks[category]) tasks[category] = [];
-          if (!task.done) task.done = false;
-          tasks[category].unshift(task);
-        });
-        localStorage.setItem('home_ops_tasks', JSON.stringify(tasks));
-      }
-    } catch(err) {
-      alert("Could not fetch remote updates. Keeping local copy.");
+  try {
+    const res = await fetch(PROXY_URL);
+    const data = await res.json();
+    if (data && data.tasks) {
+      tasks = groupTasksByCategories(data.tasks);
+      localStorage.setItem('home_ops_tasks_master', JSON.stringify(data.tasks));
     }
-  } else {
-    await new Promise(r => setTimeout(r, 600));
+  } catch(err) {
+    alert("Could not fetch from server. Loading local cache.");
+    const cached = localStorage.getItem('home_ops_tasks_master');
+    if (cached) {
+      tasks = groupTasksByCategories(JSON.parse(cached));
+    }
   }
   
   btn.classList.remove('loading');
   render();
-});
+}
 
+document.getElementById('syncBtn').addEventListener('click', performSync);
+
+const initialCache = localStorage.getItem('home_ops_tasks_master');
+if (initialCache) {
+  tasks = groupTasksByCategories(JSON.parse(initialCache));
+}
 render();
+performSync();
 </script>
 </body>
 </html>
