@@ -55,20 +55,18 @@
   .timeline::before{ content:''; position:absolute; left:38px; top:6px; bottom:6px; width:2px; background:var(--line); }
   .stop{ position:relative; padding-left:34px; padding-bottom:18px; }
   .stop .dot{ position:absolute; left:0; top:4px; width:12px; height:12px; border-radius:50%; background:var(--card); border:2px solid var(--haint); z-index:2; }
-  .stop.done .dot{ background:var(--haint); }
   
   .stop-card{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
   .stop-card-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; cursor:pointer; }
   .stop-time{ font-family:var(--font-mono); font-size:11px; color:var(--brass); letter-spacing:.04em; font-weight:600; text-transform:uppercase; }
   .stop-title{ font-size:15px; font-weight:700; margin:3px 0; line-height:1.3; }
-  .stop.done .stop-title{ text-decoration:line-through; color:var(--ink-soft); }
   .stop.collapsed .stop-body{ display:none; }
   .chevron-btn{ flex:0 0 auto; width:24px; height:24px; border-radius:50%; border:1px solid var(--line); background:var(--bg); color:var(--ink-soft); font-size:11px; display:flex; align-items:center; justify-content:center; }
   .stop-detail{ font-size:12.5px; color:var(--ink-soft); line-height:1.45; margin-top:4px; }
 
   .stop-actions{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
   .act-btn{ display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600; padding:6px 10px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--ink); text-decoration:none; cursor:pointer; }
-  .act-btn.done-btn.checked{ background:var(--haint); color:#fff; border-color:var(--haint); }
+  .act-btn.done-btn{ background:var(--haint); color:#fff; border-color:var(--haint); }
 
   .tag{ display:inline-block; font-family:var(--font-mono); font-size:9.5px; padding:2px 7px; border-radius:4px; text-transform:uppercase; background:var(--haint-tint); color:var(--haint-deep); margin-bottom:4px; font-weight:600; }
   .tag.high{ background:var(--brick-tint); color:#7a3223; }
@@ -93,36 +91,34 @@
 </div>
 
 <script>
-// Pointing directly to your Cloudflare Worker CORS proxy
 const APPS_SCRIPT_URL = "https://gmail-task-proxy.sorinfamilyemail.workers.dev/";
 
 const DEFAULT_DATA = {
   today: [
-    { id:'t1', time:'3:30 PM', tag:'School', title:'Pickup & Carpool: Rosie & Maisie', detail:'Remember Maisie needs her soccer bag packed for practice directly after.', high:false },
-    { id:'t2', time:'5:30 PM', tag:'Action', title:'Confirm Saturday playdate with Sarah', detail:'Sarah sent email regarding logistics for 10 AM Saturday.', high:true },
-    { id:'t3', time:'6:45 PM', tag:'Dinner', title:'Dinner: Pan-Seared Chicken & Rice', detail:'Thaw chicken cutlets before 4:00 PM.', high:false }
+    { id:'t1', time:'3:30 PM', tag:'School', title:'Pickup & Carpool: Rosie & Maisie', detail:'Remember Maisie needs her soccer bag packed for practice directly after.', high:false, done:false },
+    { id:'t2', time:'5:30 PM', tag:'Action', title:'Confirm Saturday playdate with Sarah', detail:'Sarah sent email regarding logistics for 10 AM Saturday.', high:true, done:false },
+    { id:'t3', time:'6:45 PM', tag:'Dinner', title:'Dinner: Pan-Seared Chicken & Rice', detail:'Thaw chicken cutlets before 4:00 PM.', high:false, done:false }
   ],
   kids: [
-    { id:'k1', time:'Due Friday', tag:'Rosie', title:'Return signed field trip permission slip', detail:'Print form from school portal email and place in Rosie backpack.', high:true },
-    { id:'k2', time:'Next Mon', tag:'Maisie', title:'Order spring soccer uniform (Size YM)', detail:'Registration link was sent by league coordinator.', high:false }
+    { id:'k1', time:'Due Friday', tag:'Rosie', title:'Return signed field trip permission slip', detail:'Print form from school portal email and place in Rosie backpack.', high:true, done:false },
+    { id:'k2', time:'Next Mon', tag:'Maisie', title:'Order spring soccer uniform (Size YM)', detail:'Registration link was sent by league coordinator.', high:false, done:false }
   ],
   meals: [
-    { id:'m1', time:'Tonight', tag:'Plan', title:'Pan-Seared Chicken Cutlets & Rice', detail:'Pantry check: Jasmine rice, garlic, olive oil, lemon.', high:false },
-    { id:'m2', time:'Tomorrow', tag:'Plan', title:'Homemade Cast-Iron Skillet Pizza', detail:'Pick up whole milk mozzarella and fresh basil from grocery.', high:false },
-    { id:'m3', time:'Weekend', tag:'Prep', title:'Sunday Slow Cooker Chili', detail:'Ground turkey, black beans, diced tomatoes.', high:false }
+    { id:'m1', time:'Tonight', tag:'Plan', title:'Pan-Seared Chicken Cutlets & Rice', detail:'Pantry check: Jasmine rice, garlic, olive oil, lemon.', high:false, done:false },
+    { id:'m2', time:'Tomorrow', tag:'Plan', title:'Homemade Cast-Iron Skillet Pizza', detail:'Pick up whole milk mozzarella and fresh basil from grocery.', high:false, done:false },
+    { id:'m3', time:'Weekend', tag:'Prep', title:'Sunday Slow Cooker Chili', detail:'Ground turkey, black beans, diced tomatoes.', high:false, done:false }
   ],
   house: [
-    { id:'h1', time:'This Week', tag:'Maintenance', title:'Order 20x25x1 HVAC filters', detail:'Swap second-floor air return filter before pollen season.', high:false },
-    { id:'h2', time:'Weekend', tag:'Yard', title:'Check yard planter & Serviceberry tree', detail:'Inspect soil moisture and trim early spring deadwood.', high:false }
+    { id:'h1', time:'This Week', tag:'Maintenance', title:'Order 20x25x1 HVAC filters', detail:'Swap second-floor air return filter before pollen season.', high:false, done:false },
+    { id:'h2', time:'Weekend', tag:'Yard', title:'Check yard planter & Serviceberry tree', detail:'Inspect soil moisture and trim early spring deadwood.', high:false, done:false }
   ],
   inbox: [
-    { id:'i1', time:'Auto-Parsed', tag:'From Alana', title:'Dentist confirmation for both kids', detail:'Extracted from forward: "Appointments booked for next Thursday at 2 PM."', high:false }
+    { id:'i1', time:'Auto-Parsed', tag:'From Alana', title:'Dentist confirmation for both kids', detail:'Extracted from forward: "Appointments booked for next Thursday at 2 PM."', high:false, done:false }
   ]
 };
 
 let activeTab = 'today';
 let tasks = JSON.parse(localStorage.getItem('home_ops_tasks') || 'null') || DEFAULT_DATA;
-let checked = JSON.parse(localStorage.getItem('home_ops_checked') || '{}');
 let collapsed = {};
 
 const TAB_CONFIG = [
@@ -152,17 +148,20 @@ function render() {
   renderTabs();
   const content = document.getElementById('content');
   const currentTabInfo = TAB_CONFIG.find(t => t.id === activeTab);
-  const items = tasks[activeTab] || [];
+  
+  // Filter out completed tasks so they auto-hide from active view (Item 4)
+  const allItems = tasks[activeTab] || [];
+  const items = allItems.filter(item => !item.done);
 
   content.innerHTML = `
     <div class="day-title"><h2>${currentTabInfo.title}</h2></div>
     <div class="day-note">${items.length === 0 ? 'All caught up in this section!' : 'Tap card to expand details or mark completed.'}</div>
     <div class="timeline">
       ${items.map(item => {
-        const isDone = !!checked[item.id];
-        const isCollapsed = collapsed[item.id] !== undefined ? collapsed[item.id] : isDone;
+        // Default to collapsed unless explicitly toggled open (Item 3)
+        const isCollapsed = collapsed[item.id] !== undefined ? collapsed[item.id] : true;
         return `
-          <div class="stop ${isDone ? 'done' : ''} ${isCollapsed ? 'collapsed' : ''}">
+          <div class="stop ${isCollapsed ? 'collapsed' : ''}">
             <div class="dot"></div>
             <div class="stop-card">
               <div class="stop-card-head" data-toggle="${item.id}">
@@ -176,8 +175,8 @@ function render() {
               <div class="stop-body">
                 <div class="stop-detail">${item.detail}</div>
                 <div class="stop-actions">
-                  <button class="act-btn done-btn ${isDone ? 'checked' : ''}" data-id="${item.id}">
-                    ${isDone ? '✓ Completed' : 'Mark Done'}
+                  <button class="act-btn done-btn" data-id="${item.id}">
+                    ✓ Complete
                   </button>
                 </div>
               </div>
@@ -191,7 +190,7 @@ function render() {
   content.querySelectorAll('[data-toggle]').forEach(el => {
     el.addEventListener('click', () => {
       const id = el.dataset.toggle;
-      collapsed[id] = !(collapsed[id] !== undefined ? collapsed[id] : checked[id]);
+      collapsed[id] = collapsed[id] !== undefined ? !collapsed[id] : false;
       render();
     });
   });
@@ -200,8 +199,14 @@ function render() {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const id = btn.dataset.id;
-      checked[id] = !checked[id];
-      localStorage.setItem('home_ops_checked', JSON.stringify(checked));
+      for (let cat in tasks) {
+        const task = tasks[cat].find(t => t.id === id);
+        if (task) {
+          task.done = true; // Marks done and triggers auto-hide (Items 2 & 4)
+          break;
+        }
+      }
+      localStorage.setItem('home_ops_tasks', JSON.stringify(tasks));
       render();
     });
   });
@@ -214,11 +219,12 @@ document.getElementById('syncBtn').addEventListener('click', async () => {
   if (APPS_SCRIPT_URL) {
     try {
       const res = await fetch(APPS_SCRIPT_URL);
-      const remoteData = await res.json();
+      const remoteData = a res.json(); // wait, keep clean: const remoteData = await res.json();
       if (remoteData && remoteData.newTasks && remoteData.newTasks.length > 0) {
         remoteData.newTasks.forEach(task => {
           const category = task.category || 'inbox';
           if (!tasks[category]) tasks[category] = [];
+          if (!task.done) task.done = false;
           tasks[category].unshift(task);
         });
         localStorage.setItem('home_ops_tasks', JSON.stringify(tasks));
