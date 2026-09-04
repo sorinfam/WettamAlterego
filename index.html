@@ -186,7 +186,7 @@ async function performSync() {
   btn.classList.add('loading');
   
   try {
-    const proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(SCRIPT_URL);
+    const proxyUrl = "https://api.codetabs.com/v1/proxy?url=" + encodeURIComponent(SCRIPT_URL);
     const res = await fetch(proxyUrl);
     const data = await res.json();
     
