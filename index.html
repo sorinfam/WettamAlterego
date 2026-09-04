@@ -1,5 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Command">
+<title>Home Ops — Command</title>
+<style>
+  :root{
+    --bg: #efe9dc;
+    --bg-alt: #e4dcc8;
+    --card: #f6f2e7;
+    --ink: #232a20;
+    --ink-soft: #5b6154;
+    --haint: #3e6e72;
+    --haint-deep: #2c4f52;
+    --haint-tint: #cfe1df;
+    --brick: #b85c4a;
+    --brick-tint: #f0dcd3;
+    --brass: #a9843f;
+    --line: #d8cfb8;
+    --font-display: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', serif;
+    --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, 'SF Mono', 'Courier New', monospace;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html,body{ margin:0; padding:0; background:var(--bg); color:var(--ink); font-family:var(--font-body); }
+  body{
+    background-image: radial-gradient(circle at 1px 1px, rgba(35,42,32,0.05) 1px, transparent 0);
+    background-size: 14px 14px;
+  }
+  .app{ max-width:480px; margin:0 auto; min-height:100vh; background:var(--bg); position:relative; padding-bottom:40px; }
+  header{ padding:22px 20px 14px; display:flex; justify-content:space-between; align-items:flex-start; }
+  .eyebrow{ font-family:var(--font-mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--haint-deep); margin:0 0 4px; }
+  h1{ font-family:var(--font-display); font-weight:700; font-size:32px; margin:0; line-height:1.05; color:var(--ink); letter-spacing:-0.01em; }
+  .subhead{ font-size:13px; color:var(--ink-soft); margin-top:6px; }
+  
+  .sync-btn{ display:inline-flex; align-items:center; gap:6px; background:var(--haint); color:#fff; border:none; border-radius:20px; padding:8px 14px; font-size:11px; font-family:var(--font-mono); font-weight:600; cursor:pointer; }
+  .sync-btn:active{ transform: scale(0.96); }
+  .sync-btn.loading svg{ animation: spin 1s linear infinite; }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+
+  nav.tabs{ position:sticky; top:0; z-index:20; background:var(--bg); display:flex; gap:6px; padding:12px 20px 10px; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid var(--line); }
+  nav.tabs::-webkit-scrollbar{ display:none; }
+  .tab{ flex:0 0 auto; font-family:var(--font-mono); font-size:12px; letter-spacing:.03em; padding:8px 13px; border-radius:20px; border:1px solid var(--line); background:var(--card); color:var(--ink-soft); cursor:pointer; white-space:nowrap; }
+  .tab.active{ background:var(--haint); color:#fff; border-color:var(--haint); }
+
+  .day-title{ padding:16px 20px 4px; }
+  .day-title h2{ font-family:var(--font-display); font-size:20px; margin:0; }
+  .day-note{ padding:0 20px 8px; font-size:12.5px; color:var(--ink-soft); font-style:italic; line-height:1.45; }
+
+  .timeline{ position:relative; padding:14px 20px 6px 20px; }
+  .timeline::before{ content:''; position:absolute; left:38px; top:6px; bottom:6px; width:2px; background:var(--line); }
+  .stop{ position:relative; padding-left:34px; padding-bottom:18px; }
+  .stop .dot{ position:absolute; left:0; top:4px; width:12px; height:12px; border-radius:50%; background:var(--card); border:2px solid var(--haint); z-index:2; }
+  
+  .stop-card{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
+  .stop-card-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; cursor:pointer; }
+  .stop-time{ font-family:var(--font-mono); font-size:11px; color:var(--brass); letter-spacing:.04em; font-weight:600; text-transform:uppercase; }
+  .stop-title{ font-size:15px; font-weight:700; margin:3px 0; line-height:1.3; }
+  .stop.collapsed .stop-body{ display:none; }
+  .chevron-btn{ flex:0 0 auto; width:24px; height:24px; border-radius:50%; border:1px solid var(--line); background:var(--bg); color:var(--ink-soft); font-size:11px; display:flex; align-items:center; justify-content:center; }
+  .stop-detail{ font-size:12.5px; color:var(--ink-soft); line-height:1.45; margin-top:4px; }
+
+  .stop-actions{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  .act-btn{ display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600; padding:6px 10px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--ink); text-decoration:none; cursor:pointer; }
+  .act-btn.done-btn{ background:var(--haint); color:#fff; border-color:var(--haint); }
+
+  .tag{ display:inline-block; font-family:var(--font-mono); font-size:9.5px; padding:2px 7px; border-radius:4px; text-transform:uppercase; background:var(--haint-tint); color:var(--haint-deep); margin-bottom:4px; font-weight:600; }
+  .tag.high{ background:var(--brick-tint); color:#7a3223; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <p class="eyebrow">Household Chief of Staff</p>
+      <h1>Home Ops</h1>
+      <p class="subhead">Tap items to check off or view details.</p>
+    </div>
+    <button class="sync-btn" id="syncBtn">
+      <svg id="syncIcon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+      Sync
+    </button>
+  </header>
+
+  <nav class="tabs" id="tabs"></nav>
+  <div id="content"></div>
+</div>
+
 <script>
-const PROXY_URL = "https://script.google.com/macros/s/AKfycbzE8GnYEU0o25d0D9OmlHTFwJK1ONxfOFKMqsQNMWP3UdJSUBvDv06doqRnPWK3JTiR/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzE8GnYEU0o25d0D9OmlHTFwJK1ONxfOFKMqsQNMWP3UdJSUBvDv06doqRnPWK3JTiR/exec";
 
 let activeTab = 'today';
 let tasks = { today: [], kids: [], meals: [], house: [], inbox: [] };
@@ -109,8 +201,9 @@ function render() {
       render();
 
       try {
-        await fetch(`https://corsproxy.io/?` + encodeURIComponent(PROXY_URL), {
+        await fetch(SCRIPT_URL, {
           method: 'POST',
+          mode: 'no-cors',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'updateDone', id: id, done: true })
         });
@@ -121,28 +214,58 @@ function render() {
   });
 }
 
-async function performSync() {
+function performSync() {
   const btn = document.getElementById('syncBtn');
   btn.classList.add('loading');
   
-  try {
-    const corsProxyUrl = "https://corsproxy.io/?";
-    const res = await fetch(corsProxyUrl + encodeURIComponent(PROXY_URL));
-    const data = await res.json();
+  // JSONP global callback handler
+  window.handleTaskData = function(data) {
     if (data && data.tasks) {
       tasks = groupTasksByCategories(data.tasks);
       localStorage.setItem('home_ops_tasks_master', JSON.stringify(data.tasks));
     }
-  } catch(err) {
+    cleanup();
+  };
+
+  function cleanup() {
+    if (window._jsonpScript) {
+      document.body.removeChild(window._jsonpScript);
+      window._jsonpScript = null;
+    }
+    btn.classList.remove('loading');
+    render();
+  }
+
+  // Fallback timeout if network stalls
+  const timeout = setTimeout(() => {
+    if (btn.classList.contains('loading')) {
+      alert("Could not fetch from server. Loading local cache.");
+      const cached = localStorage.getItem('home_ops_tasks_master');
+      if (cached) {
+        tasks = groupTasksByCategories(JSON.parse(cached));
+      }
+      cleanup();
+    }
+  }, 8000);
+
+  if (window._jsonpScript) {
+    document.body.removeChild(window._jsonpScript);
+  }
+
+  const script = document.createElement('script');
+  script.src = SCRIPT_URL + '?callback=handleTaskData&_=' + Date.now();
+  script.onerror = () => {
+    clearTimeout(timeout);
     alert("Could not fetch from server. Loading local cache.");
     const cached = localStorage.getItem('home_ops_tasks_master');
     if (cached) {
       tasks = groupTasksByCategories(JSON.parse(cached));
     }
-  }
+    cleanup();
+  };
   
-  btn.classList.remove('loading');
-  render();
+  window._jsonpScript = script;
+  document.body.appendChild(script);
 }
 
 document.getElementById('syncBtn').addEventListener('click', performSync);
@@ -154,3 +277,5 @@ if (initialCache) {
 render();
 performSync();
 </script>
+</body>
+</html>
