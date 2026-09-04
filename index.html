@@ -181,38 +181,30 @@ function render() {
   });
 }
 
-// Uses JSONP script injection to work cleanly across Safari and Chrome without CORS errors
-function performSync() {
+async function performSync() {
   const btn = document.getElementById('syncBtn');
   btn.classList.add('loading');
-
-  window.handleTasks = function(data) {
+  
+  try {
+    const proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(SCRIPT_URL);
+    const res = await fetch(proxyUrl);
+    const data = await res.json();
+    
     if (data && data.tasks) {
       tasks = groupTasks(data.tasks);
       localStorage.setItem('home_ops_cache', JSON.stringify(data.tasks));
     }
-    cleanup();
-  };
-
-  function cleanup() {
-    if (window._tag) { document.body.removeChild(window._tag); window._tag = null; }
-    btn.classList.remove('loading');
-    render();
-  }
-
-  setTimeout(cleanup, 6000);
-
-  if (window._tag) document.body.removeChild(window._tag);
-  const script = document.createElement('script');
-  script.src = SCRIPT_URL + '?callback=handleTasks&_=' + Date.now();
-  script.onerror = () => {
-    alert("Offline mode: Loading local cache.");
+  } catch(err) {
+    console.error("Sync error:", err);
+    alert("Could not fetch from server. Loading local cache.");
     const cached = localStorage.getItem('home_ops_cache');
-    if (cached) tasks = groupTasks(JSON.parse(cached));
-    cleanup();
-  };
-  window._tag = script;
-  document.body.appendChild(script);
+    if (cached) {
+      tasks = groupTasks(JSON.parse(cached));
+    }
+  }
+  
+  btn.classList.remove('loading');
+  render();
 }
 
 document.getElementById('syncBtn').addEventListener('click', performSync);
