@@ -91,7 +91,7 @@
 </div>
 
 <script>
-const PROXY_URL = "https://gmail-task-proxy.sorinfamilyemail.workers.dev/";
+const PROXY_URL = "https://script.google.com/macros/s/AKfycbzE8GnYEU0o25d0D9OmlHTFwJK1ONxfOFKMqsQNMWP3UdJSUBvDv06doqRnPWK3JTiR/exec";
 
 let activeTab = 'today';
 let tasks = { today: [], kids: [], meals: [], house: [], inbox: [] };
@@ -108,7 +108,14 @@ const TAB_CONFIG = [
 function groupTasksByCategories(flatTasks) {
   const grouped = { today: [], kids: [], meals: [], house: [], inbox: [] };
   flatTasks.forEach(t => {
-    const cat = t.category && grouped[t.category] ? t.category : 'inbox';
+    let cat = (t.category || 'inbox').toLowerCase().trim();
+    if (cat.includes('today')) cat = 'today';
+    else if (cat.includes('kid')) cat = 'kids';
+    else if (cat.includes('meal')) cat = 'meals';
+    else if (cat.includes('house')) cat = 'house';
+    else cat = 'inbox';
+    
+    if (!grouped[cat]) cat = 'inbox';
     grouped[cat].push(t);
   });
   return grouped;
@@ -196,6 +203,7 @@ function render() {
       try {
         await fetch(PROXY_URL, {
           method: 'POST',
+          mode: 'no-cors',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'updateDone', id: id, done: true })
         });
