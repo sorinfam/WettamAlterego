@@ -149,7 +149,6 @@ function render() {
   const content = document.getElementById('content');
   const currentTabInfo = TAB_CONFIG.find(t => t.id === activeTab);
   
-  // Filter out completed tasks so they auto-hide from active view (Item 4)
   const allItems = tasks[activeTab] || [];
   const items = allItems.filter(item => !item.done);
 
@@ -158,7 +157,6 @@ function render() {
     <div class="day-note">${items.length === 0 ? 'All caught up in this section!' : 'Tap card to expand details or mark completed.'}</div>
     <div class="timeline">
       ${items.map(item => {
-        // Default to collapsed unless explicitly toggled open (Item 3)
         const isCollapsed = collapsed[item.id] !== undefined ? collapsed[item.id] : true;
         return `
           <div class="stop ${isCollapsed ? 'collapsed' : ''}">
@@ -202,7 +200,7 @@ function render() {
       for (let cat in tasks) {
         const task = tasks[cat].find(t => t.id === id);
         if (task) {
-          task.done = true; // Marks done and triggers auto-hide (Items 2 & 4)
+          task.done = true;
           break;
         }
       }
@@ -219,7 +217,7 @@ document.getElementById('syncBtn').addEventListener('click', async () => {
   if (APPS_SCRIPT_URL) {
     try {
       const res = await fetch(APPS_SCRIPT_URL);
-      const remoteData = a res.json(); // wait, keep clean: const remoteData = await res.json();
+      const remoteData = await res.json();
       if (remoteData && remoteData.newTasks && remoteData.newTasks.length > 0) {
         remoteData.newTasks.forEach(task => {
           const category = task.category || 'inbox';
